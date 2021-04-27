@@ -47,37 +47,37 @@ pipeline {
                     """
 
                     // We want code-coverage and pmd/spotbugs even if unittests fails
-                    status += sh returnStatus: true, script:  """
-                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd spotbugs:spotbugs javadoc:aggregate
-                    """
+                    // status += sh returnStatus: true, script:  """
+                    //     mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd spotbugs:spotbugs javadoc:aggregate
+                    // """
 
-                    junit testResults: '**/target/*-reports/TEST-*.xml'
+                    // junit testResults: '**/target/*-reports/TEST-*.xml'
 
-                    def java = scanForIssues tool: [$class: 'Java']
-                    def javadoc = scanForIssues tool: [$class: 'JavaDoc']
-                    publishIssues issues:[java, javadoc], failedTotalAll: 1
+                    // def java = scanForIssues tool: [$class: 'Java']
+                    // def javadoc = scanForIssues tool: [$class: 'JavaDoc']
+                    // publishIssues issues:[java, javadoc], failedTotalAll: 1
 
-                    def pmd = scanForIssues tool: [$class: 'Pmd', pattern: '**/target/pmd.xml']
-                    publishIssues issues:[pmd], failedTotalAll: 1
+                    // def pmd = scanForIssues tool: [$class: 'Pmd', pattern: '**/target/pmd.xml']
+                    // publishIssues issues:[pmd], failedTotalAll: 1
 
-                    def cpd = scanForIssues tool: [$class: 'Cpd', pattern: '**/target/cpd.xml']
-                    publishIssues issues:[cpd], failedTotalAll: 1
+                    // def cpd = scanForIssues tool: [$class: 'Cpd', pattern: '**/target/cpd.xml']
+                    // publishIssues issues:[cpd], failedTotalAll: 1
 
-                    def spotbugs = scanForIssues tool: [$class: 'SpotBugs', pattern: '**/target/spotbugsXml.xml']
-                    publishIssues issues:[spotbugs], failedTotalAll: 1
+                    // def spotbugs = scanForIssues tool: [$class: 'SpotBugs', pattern: '**/target/spotbugsXml.xml']
+                    // publishIssues issues:[spotbugs], failedTotalAll: 1
 
-                    step([$class: 'JacocoPublisher',
-                          execPattern: 'target/*.exec,**/target/*.exec',
-                          classPattern: 'target/classes,**/target/classes',
-                          sourcePattern: 'src/main/java,**/src/main/java',
-                          exclusionPattern: 'src/test*,**/src/test*,**/*?Request.*,**/*?Response.*,**/*?Request$*,**/*?Response$*,**/*?DTO.*,**/*?DTO$*'
-                    ])
+                    // step([$class: 'JacocoPublisher',
+                    //       execPattern: 'target/*.exec,**/target/*.exec',
+                    //       classPattern: 'target/classes,**/target/classes',
+                    //       sourcePattern: 'src/main/java,**/src/main/java',
+                    //       exclusionPattern: 'src/test*,**/src/test*,**/*?Request.*,**/*?Response.*,**/*?Request$*,**/*?Response$*,**/*?DTO.*,**/*?DTO$*'
+                    // ])
 
-                    warnings consoleParsers: [
-                         [parserName: "Java Compiler (javac)"],
-                         [parserName: "JavaDoc Tool"]],
-                         unstableTotalAll: "0",
-                         failedTotalAll: "0"
+                    // warnings consoleParsers: [
+                    //      [parserName: "Java Compiler (javac)"],
+                    //      [parserName: "JavaDoc Tool"]],
+                    //      unstableTotalAll: "0",
+                    //      failedTotalAll: "0"
 
                     if ( status != 0 ) {
                         error("Build failed")
