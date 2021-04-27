@@ -184,8 +184,8 @@ pipeline {
             }
         }
         success {
-            step([$class: 'JavadocArchiver', javadocDir: 'target/site/apidocs', keepAll: false])
-            archiveArtifacts artifacts: '**/target/*-jar-with-dependencies.jar', fingerprint: true
+            // step([$class: 'JavadocArchiver', javadocDir: 'target/site/apidocs', keepAll: false])
+            // archiveArtifacts artifacts: '**/target/*-jar-with-dependencies.jar', fingerprint: true
             script {
                 if( "${env.BRANCH_NAME}" == 'master' && currentBuild.getPreviousBuild() != null && currentBuild.getPreviousBuild().result == 'FAILURE' ) {
                     emailext(
