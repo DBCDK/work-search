@@ -730,17 +730,6 @@
 
     -->
 
-  <requestHandler name="/book_search" class="solr.SearchHandler">
-    <lst name="defaults">
-      <str name="echoParams">explicit</str>
-      <int name="rows">10</int>
-      <str name="defType">edismax</str>
-      <str name="df">title</str>
-    </lst>
-  </requestHandler>
-
-
-
   <!-- SearchHandler
 
        http://wiki.apache.org/solr/SearchHandler
@@ -833,33 +822,6 @@
     </lst>
   </requestHandler>
 
-
-  <!-- A request handler that returns indented JSON by default -->
-  <requestHandler name="/query" class="solr.SearchHandler">
-    <lst name="defaults">
-      <str name="echoParams">explicit</str>
-      <str name="wt">json</str>
-      <str name="indent">true</str>
-      <str name="defType">edismax</str>
-      <str name="qf">creator title subject</str>
-    </lst>
-  </requestHandler>
-
-
-  <!-- A Robust Example
-
-       This example SearchHandler declaration shows off usage of the
-       SearchHandler with many defaults declared
-
-       Note that multiple instances of the same Request Handler
-       (SearchHandler) can be registered multiple times with different
-       names (and different init parameters)
-    -->
-  <requestHandler name="/browse" class="solr.SearchHandler" useParams="query,facets,velocity,browse">
-    <lst name="defaults">
-      <str name="echoParams">explicit</str>
-    </lst>
-  </requestHandler>
 
   <initParams path="/update/**,/query,/select,/tvrh,/elevate,/spell,/browse">
     <lst name="defaults">
@@ -1386,19 +1348,6 @@
   <!--
      Custom response writers can be declared as needed...
     -->
-  <queryResponseWriter name="velocity" class="solr.VelocityResponseWriter" startup="lazy">
-    <str name="template.base.dir">${velocity.template.base.dir:}</str>
-    <str name="solr.resource.loader.enabled">${velocity.solr.resource.loader.enabled:true}</str>
-    <str name="params.resource.loader.enabled">${velocity.params.resource.loader.enabled:false}</str>
-  </queryResponseWriter>
-
-  <!-- XSLT response writer transforms the XML output by any xslt file found
-       in Solr's conf/xslt directory.  Changes to xslt files are checked for
-       every xsltCacheLifetimeSeconds.
-    -->
-  <queryResponseWriter name="xslt" class="solr.XSLTResponseWriter">
-    <int name="xsltCacheLifetimeSeconds">5</int>
-  </queryResponseWriter>
 
 
   <!-- Query Parsers
