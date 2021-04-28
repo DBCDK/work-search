@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>dk.dbc</groupId>
+        <artifactId>work-search</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>work-search-solr</artifactId>
+    <packaging>jar</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>reserve-network-port</id>
+                        <goals>
+                            <goal>reserve-network-port</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <portNames>
+                                <portName>solr.port</portName>
+                                <portName>solr.port.zk</portName>
+                            </portNames>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-schema</id>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/schema</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/solr</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>solr-exec</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>dk.dbc</groupId>
+                                    <artifactId>dbc-solr8-base</artifactId>
+                                    <version>${solr.version}-SNAPSHOT</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>dictionaries</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>dk.stavekontrollen</groupId>
+                                    <artifactId>stavekontrollen</artifactId>
+                                    <version>${stavekontrol.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/schema</outputDirectory>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <id>set-solr-version-in-schema</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <workingDirectory>${basedir}</workingDirectory>
+                            <executable>bash</executable>
+                            <arguments>
+                                <argument>-ce</argument>
+                                <argument><![CDATA[
+for file in ${project.build.directory}/schema/*.in; do
+    sed -e 's/>LATEST</>${solr.version}</g' <${file} >${file%.in}
+done
+]]></argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>solr-instance</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <async>true</async>
+                            <workingDirectory>${basedir}</workingDirectory>
+                            <executable>bash</executable>
+                            <environmentVariables>
+                                <SOLR_ULIMIT_CHECKS>false</SOLR_ULIMIT_CHECKS>
+                            </environmentVariables>
+                            <arguments>
+                                <argument>-ce</argument>
+                                <argument><![CDATA[
+rm -rf ${project.build.directory}/solr/server/solr/zoo_data ${project.build.directory}/solr/server/solr/*_shard*_replica*/
+${project.build.directory}/solr/bin/solr start -f -p ${solr.port} -c -m 4g -a "-DzkRun=localhost:${solr.port.zk} -Djute.maxbuffer=4194304"
+]]></argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>solr-ready</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <workingDirectory>${basedir}</workingDirectory>
+                            <executable>bash</executable>
+                            <arguments>
+                                <argument>-ce</argument>
+                                <argument><![CDATA[
+for i in $(seq 1 600) exit; do
+    [ $i != exit ]
+    if [ -e ${project.build.directory}/solr/server/logs/solr.log ] && grep -q "Server Started" ${project.build.directory}/solr/server/logs/solr.log; then
+        break
+    fi
+    sleep .1
+done
+${project.build.directory}/solr/bin/solr create_collection -c search -d ${project.build.directory}/schema -p ${solr.port}
+]]></argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>solr-text</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <workingDirectory>${basedir}</workingDirectory>
+                            <executable>bash</executable>
+                            <arguments>
+                                <argument>-e</argument>
+                                <argument>${project.build.directory}/test-classes/test-script.sh</argument>
+                                <argument>${project.build.directory}/test-classes/schema-tests</argument>
+                                <argument>http://localhost:${solr.port}/solr/search</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>solr-config</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptorSourceDirectory>src/main/assembly</descriptorSourceDirectory>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>

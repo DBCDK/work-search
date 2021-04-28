@@ -1,0 +1,17 @@
+<assembly>
+    <id>solr-config</id>
+    <formats>
+        <format>zip</format>
+        <format>tar</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+        <fileSet>
+            <directory>${project.build.directory}/schema</directory>
+            <outputDirectory>.</outputDirectory>
+            <excludes>
+                <exclude>*.in</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
+</assembly>
