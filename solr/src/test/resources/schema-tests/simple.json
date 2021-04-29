@@ -1,0 +1,28 @@
+{
+    "tests": [
+        {
+            "title": "hest",
+            "query": "t.title:hest",
+            "expected": [ "1" ] },
+        {
+            "title": "hest'ish",
+            "query": "a.title:(mine heste)",
+            "expected": [ "1" ] },
+        {
+            "title": "hund",
+            "query": "t.title:hund",
+            "expected": [ "2" ] }
+    ],
+    "docs": [
+        {
+            "id": "1",
+            "t": "m",
+            "term.title": "min hest"
+        },
+        {
+            "id": "2",
+            "t": "m",
+            "term.title": "min hund"
+        }
+    ]
+}

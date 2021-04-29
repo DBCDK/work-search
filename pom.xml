@@ -18,10 +18,13 @@
 
     <properties>
         <pg-queue.version>1.5-SNAPSHOT</pg-queue.version>
-        <solr.version>8.8.1</solr.version>
+        <solr.major.version>8.8</solr.major.version>
+        <solr.version>${solr.major.version}.1</solr.version>
+        <stavekontrol.version>2.6.107</stavekontrol.version>
     </properties>
 
     <modules>
+        <module>solr</module>
     </modules>
 
     <groupId>dk.dbc</groupId>
